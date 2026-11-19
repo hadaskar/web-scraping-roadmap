@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>תכנית לימוד: Web Scraping & Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-canvas:#eef1f6;
+    --bg-panel:#ffffff;
+    --ink:#1c2333;
+    --ink-soft:#5b6472;
+    --ink-faint:#8791a1;
+    --accent:#2f6fed;
+    --accent-dark:#1e50b8;
+    --accent-bg:#e8f0fe;
+    --success:#12b76a;
+    --success-bg:#e6f8ef;
+    --pending:#f79009;
+    --pending-bg:#fff4e5;
+    --idle:#8791a1;
+    --idle-bg:#eef1f6;
+    --danger:#f04438;
+    --border:#dde3ec;
+    --radius-lg:16px;
+    --radius-md:12px;
+    --radius-sm:8px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --shadow-sm:0 1px 2px rgba(28,35,51,.06);
+    --shadow-md:0 8px 24px -8px rgba(28,35,51,.18);
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #e3ecff 0%, transparent 60%),
+      radial-gradient(900px 500px at 110% 10%, #e6faf0 0%, transparent 55%),
+      var(--bg-canvas);
+    color:var(--ink);
+    direction:rtl;
+    padding:28px 18px 80px;
+    line-height:1.5;
+  }
+
+  .wrap{max-width:920px;margin:0 auto;}
+
+  a{color:var(--accent);}
+
+  /* ---------- masthead ---------- */
+  .browser-bar{
+    display:flex;align-items:center;gap:14px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:10px 18px;
+    box-shadow:var(--shadow-sm);
+    margin-bottom:22px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+  }
+  .browser-bar .dots{display:flex;gap:6px;flex-shrink:0;}
+  .browser-bar .dots span{width:9px;height:9px;border-radius:50%;background:var(--idle-bg);border:1px solid var(--border);}
+  .browser-bar .url-line{
+    flex:1;display:flex;align-items:center;gap:8px;color:var(--ink-soft);
+    overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  }
+  .browser-bar .method{
+    background:var(--accent-bg);color:var(--accent-dark);font-weight:700;
+    padding:2px 8px;border-radius:6px;flex-shrink:0;
+  }
+  #overallStatusPill{flex-shrink:0;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:28px 26px;
+    box-shadow:var(--shadow-md);
+    margin-bottom:22px;
+  }
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:26px;
+    margin:0 0 8px;
+    letter-spacing:-.01em;
+  }
+  .hero p.lede{margin:0 0 18px;color:var(--ink-soft);font-size:14.5px;max-width:62ch;}
+
+  .stat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+  .chip{
+    font-family:var(--font-mono);font-size:12.5px;font-weight:600;
+    background:var(--idle-bg);color:var(--ink-soft);
+    border:1px solid var(--border);
+    padding:6px 12px;border-radius:999px;
+  }
+
+  .progress-overall{margin-bottom:16px;}
+  .progress-overall .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:12px;}
+  .progress-overall .label{font-weight:600;font-size:14px;}
+  .progress-overall .pct{font-family:var(--font-mono);font-weight:700;color:var(--accent-dark);}
+  .track{height:12px;background:var(--idle-bg);border-radius:999px;overflow:hidden;border:1px solid var(--border);}
+  .track .fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),#5ad0a4);
+    width:0%;
+    border-radius:999px;
+    transition:width .5s ease;
+  }
+  .motiv{margin-top:8px;font-size:13.5px;color:var(--ink-soft);}
+
+  .meta-row{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px dashed var(--border);}
+  .streak{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);}
+  .streak b{color:var(--ink);font-family:var(--font-mono);}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;flex:1;}
+  .badge{
+    font-size:12px;font-weight:600;
+    background:var(--success-bg);color:#0a7a4c;
+    border:1px solid #b9ecd3;
+    padding:5px 10px;border-radius:999px;
+    opacity:.35;filter:grayscale(1);
+    transition:opacity .3s ease, filter .3s ease;
+    white-space:nowrap;
+  }
+  .badge.unlocked{opacity:1;filter:none;}
+  .reset-link{
+    background:none;border:none;color:var(--ink-faint);font-size:12px;
+    text-decoration:underline;cursor:pointer;font-family:var(--font-body);
+    padding:0;margin-inline-start:auto;
+  }
+  .reset-link:hover{color:var(--danger);}
+
+  /* ---------- week ---------- */
+  .week{
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    margin-bottom:18px;
+    box-shadow:var(--shadow-sm);
+    overflow:hidden;
+  }
+  .week-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);}
+  .request-line{
+    font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);
+    display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;
+  }
+  .request-line .m{color:var(--accent-dark);font-weight:700;}
+  .week-head h2{font-family:var(--font-display);font-size:18.5px;margin:0 0 4px;}
+  .week-sub{margin:0 0 14px;color:var(--ink-soft);font-size:13.5px;}
+  .week-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .status-pill{
+    font-family:var(--font-mono);font-weight:700;font-size:11.5px;
+    padding:4px 10px;border-radius:999px;flex-shrink:0;
+    border:1px solid transparent;
+  }
+  .status-pill.idle{background:var(--idle-bg);color:var(--ink-soft);border-color:var(--border);}
+  .status-pill.pending{background:var(--pending-bg);color:#a15c00;border-color:#fbdca2;}
+  .status-pill.done{background:var(--success-bg);color:#0a7a4c;border-color:#b9ecd3;}
+  .week-status .track{flex:1;min-width:120px;height:9px;}
+  .week-status .count{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);flex-shrink:0;}
+
+  .tasks{padding:6px 22px 4px;}
+
+  .task{
+    border-bottom:1px solid var(--border);
+    padding:16px 0;
+  }
+  .task:last-child{border-bottom:none;}
+  .task-top{display:flex;gap:14px;align-items:flex-start;}
+
+  .check{position:relative;flex-shrink:0;margin-top:2px;cursor:pointer;}
+  .check input{position:absolute;opacity:0;width:22px;height:22px;margin:0;cursor:pointer;}
+  .check .box{
+    display:block;width:22px;height:22px;border-radius:7px;
+    border:2px solid #c3cbd8;background:#fff;
+    transition:background .15s ease, border-color .15s ease;
+    position:relative;
+  }
+  .check .box::after{
+    content:"";position:absolute;inset:0;
+    background:no-repeat center/62% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    opacity:0;transform:scale(.5);transition:opacity .15s ease, transform .15s ease;
+  }
+  .check input:checked + .box{background:var(--success);border-color:var(--success);}
+  .check input:checked + .box::after{opacity:1;transform:scale(1);}
+  .check input:focus-visible + .box{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .task-info{flex:1;min-width:0;}
+  .task-info h3{margin:0 0 4px;font-size:15px;font-weight:700;}
+  .task.is-done .task-info h3{color:var(--ink-soft);}
+  .task.is-done .task-info h3::after{content:" ✓";color:var(--success);}
+  .task-practice{margin:0 0 8px;font-size:13.5px;color:var(--ink-soft);}
+  .task-tags{display:flex;gap:6px;flex-wrap:wrap;}
+  .tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;font-family:var(--font-mono);}
+  .tag.tool{background:var(--accent-bg);color:var(--accent-dark);}
+  .tag.hours{background:var(--idle-bg);color:var(--ink-soft);}
+
+  .task-side{display:flex;flex-direction:column;align-items:stretch;gap:6px;flex-shrink:0;width:150px;}
+  .date-input{
+    font-family:var(--font-mono);font-size:12px;
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:5px 7px;color:var(--ink-soft);background:#fff;
+  }
+  .date-input:disabled{opacity:.5;background:var(--idle-bg);}
+  .btn-detail{
+    font-family:var(--font-body);font-size:12px;font-weight:600;
+    background:none;border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:5px 8px;color:var(--accent-dark);cursor:pointer;
+  }
+  .btn-detail:hover{background:var(--accent-bg);}
+
+  .task-detail{
+    margin-top:12px;margin-right:36px;
+    background:var(--idle-bg);
+    border-radius:var(--radius-sm);
+    padding:12px 14px;
+    font-size:13.5px;color:var(--ink-soft);
+  }
+  .task-detail p{margin:0;}
+  .task-detail[hidden]{display:none;}
+
+  .task-notes{margin-top:10px;margin-right:36px;}
+  .task-notes label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-faint);margin-bottom:4px;text-transform:none;}
+  .task-notes textarea{
+    width:100%;min-height:52px;resize:vertical;
+    font-family:var(--font-body);font-size:13px;
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:8px 10px;color:var(--ink);background:#fff;
+  }
+  .task-notes textarea:focus,.date-input:focus,.btn-detail:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .note-box{
+    margin:4px 22px 18px;
+    background:#fff8e6;border-right:4px solid var(--pending);
+    padding:12px 16px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    font-size:13.5px;color:#7a5300;
+  }
+  .note-box strong{color:#5c3d00;}
+
+  footer{text-align:center;color:var(--ink-faint);font-size:12px;margin-top:24px;}
+
+  @media (max-width:640px){
+    .task-top{flex-wrap:wrap;}
+    .task-side{width:100%;flex-direction:row;}
+    .date-input{flex:1;}
+    .task-detail,.task-notes{margin-right:0;}
+    .hero h1{font-size:21px;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important;}
+  }
+
+  /* confetti */
+  .confetti-piece{
+    position:fixed;top:-10px;width:8px;height:14px;opacity:.9;
+    animation:fall linear forwards;z-index:999;pointer-events:none;
+    border-radius:2px;
+  }
+  @keyframes fall{
+    to{transform:translateY(105vh) rotate(360deg);opacity:0;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="browser-bar">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="url-line"><span class="method">GET</span><span>/study-plan/web-scraping-automation</span></div>
+    <span class="status-pill idle" id="overallStatusPill">100 Continue · 0%</span>
+  </div>
+
+  <div class="hero">
+    <h1>Web Scraping &amp; Automation — תכנית לימוד אינטראקטיבית</h1>
+    <p class="lede">מסלול מובנה בן 5 שבועות לרכישת מיומנות מעשית בתקשורת רשת, חילוץ נתונים ועקיפת מנגנוני הגנה. כל שבוע מתמקד בנושא מרכזי אחד, כולל תרגול, פרויקט, ומקום לתעד מה למדת בפועל.</p>
+
+    <div class="stat-chips">
+      <span class="chip">📅 5 שבועות</span>
+      <span class="chip">⏱️ 65 שעות בסך הכול</span>
+      <span class="chip">✅ 15 משימות</span>
+      <span class="chip">🐍 Python · Playwright · Scrapy</span>
+    </div>
+
+    <div class="progress-overall">
+      <div class="row">
+        <span class="label">התקדמות כוללת</span>
+        <span class="pct" id="overallPct">0%</span>
+      </div>
+      <div class="track"><div class="fill" id="overallFill"></div></div>
+      <div class="motiv" id="motivText">בואי נתחיל! הצעד הראשון הוא הכי חשוב 🚀</div>
+    </div>
+
+    <div class="meta-row">
+      <div class="streak">🔥 רצף ימי עבודה: <b id="streakCount">0</b></div>
+      <div class="badges" id="badgesRow"></div>
+      <button class="reset-link" id="resetBtn" type="button">איפוס התקדמות</button>
+    </div>
+  </div>
+
+  <div id="weeksContainer"></div>
+
+  <footer>ההתקדמות נשמרת אוטומטית בדפדפן הזה בלבד (localStorage) — אם תפתחי את הקובץ בדפדפן אחר או תמחקי נתוני גלישה, הנתונים לא יעברו איתך.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "vcomm_scraping_study_plan_v1";
+
+  const WEEKS = [
+    {
+      id:"w1",
+      path:"/week-1/http-foundations",
+      title:"שבוע 1: יסודות HTTP, HTML ופיתוח סורק בסיסי",
+      sub:"התמקדות בנושא 1 ו-2 | היעד: סורק פועל בסיסי ב-Python תוך שבוע",
+      project:"בניית סורק שאוסף רשימת מוצרים או מאמרים מאתר סטטי ושומר אותם בקובץ מובנה.",
+      tasks:[
+        {id:"w1t1", title:"יסודות פרוטוקול HTTP", practice:"מבנה Request/Response, היכרות עם Headers, User-Agent, וקודי סטטוס (200, 403, 429).", tools:"DevTools, curl", hours:"4 שעות",
+          detail:"כל בקשת רשת היא שיחה בין לקוח לשרת: הלקוח שולח Request עם method (GET/POST), כתובת וכותרות (Headers) כמו User-Agent, והשרת מחזיר Response עם קוד סטטוס וגוף תשובה. קודי 2xx מציינים הצלחה, 4xx שגיאת לקוח (403 = חסום, 429 = יותר מדי בקשות), ו-5xx שגיאת שרת. הבנה זו היא הבסיס לכל סורק — בלעדיה קשה לדעת למה בקשה נכשלה."},
+        {id:"w1t2", title:"ניתוח HTML ו-DOM", practice:"הבנת מבנה תגיות, סלקטורים של CSS, זיהוי אלמנטים בדף.", tools:"Elements Tab", hours:"3 שעות",
+          detail:"ה-DOM הוא עץ ההיררכיה של הדף כפי שהדפדפן רואה אותו. כדי לחלץ מידע צריך לדעת לזהות תגיות, מחלקות (class) ומזהים (id), ולבנות סלקטור CSS שמצביע בדיוק על האלמנט הרצוי מבלי שיישבר בשינוי קטן בעיצוב האתר."},
+        {id:"w1t3", title:"ספריית Requests", practice:"שליחת בקשות GET/POST ב-Python, העברת פרמטרים וכותרות.", tools:"Python requests", hours:"3 שעות",
+          detail:"requests היא הספרייה הבסיסית לשליחת בקשות HTTP מ-Python. חשוב להכיר שימוש ב-params לפרמטרים בכתובת, headers להעברת User-Agent, ו-Session לשמירת קוקיז בין בקשות — זה ההבדל בין סקריפט חד-פעמי לסורק שמתנהג כמו משתמש אמיתי."},
+        {id:"w1t4", title:"חילוץ מידע עם BeautifulSoup", practice:"פילטור תגיות, חילוץ טקסט ולינקים, שמירת נתונים בקובץ JSON/CSV.", tools:"BeautifulSoup4", hours:"4 שעות",
+          detail:"BeautifulSoup הופך HTML גולמי לעץ שאפשר לחפש בו עם find/find_all וסלקטורי CSS. השלב האחרון והחשוב לא פחות הוא מבנה הפלט: לשמור את המידע שחולץ בצורה עקבית (JSON/CSV) כדי שאפשר יהיה להשתמש בו בהמשך."}
+      ]
+    },
+    {
+      id:"w2",
+      path:"/week-2/network-inspection",
+      title:"שבוע 2: כלי דיבאג ואיסוף נתונים מתקדם",
+      sub:"התמקדות בנושא 5 | היעד: ניתוח תעבורת רשת ושליפת נתונים מ-APIs נסתרים",
+      project:"מציאת API פנימי (JSON) של אתר יעד ושליפת אותו מידע ישירות ממנו, בלי לפרסר HTML.",
+      tasks:[
+        {id:"w2t1", title:"עבודה מתקדמת עם DevTools", practice:"מעקב בלשונית Network, סינון לפי XHR/Fetch, ניתוח Payload ו-Response JSON.", tools:"Chrome DevTools", hours:"3 שעות",
+          detail:"הרבה אתרים מודרניים טוענים את הנתונים בפועל דרך קריאות XHR/Fetch אחרי טעינת הדף. לשונית Network מאפשרת לראות בדיוק אילו קריאות נשלחות, לאיזו כתובת, עם אילו כותרות ופרמטרים, ומה חוזר בתשובה — לרוב JSON נקי בהרבה מ-HTML.", },
+        {id:"w2t2", title:"שימוש בטרמינל", practice:"המרת בקשות מ-DevTools לפקודות curl והרצתן בטרמינל.", tools:"Terminal / cURL", hours:"2 שעות",
+          detail:"אפשר להעתיק כל בקשה מ-DevTools ישירות בתור 'Copy as cURL', ואז להריץ ולשחזר אותה בטרמינל. זה שלב ביניים מצוין לפני כתיבת קוד — מוודאים שהבקשה עובדת 'ידנית' לפני שמתרגמים אותה ל-Python."},
+        {id:"w2t3", title:"פנייה ישירה ל-Internal APIs", practice:"עקיפת HTML על ידי שליחת בקשות ישירות ל-Endpoints המחזירים JSON.", tools:"Python requests", hours:"4 שעות",
+          detail:"כשמאתרים את ה-endpoint הפנימי, אפשר לפנות אליו ישירות עם requests ולקבל נתונים מובנים בלי לפרסר HTML בכלל. לרוב יהיו פרמטרים כמו page/limit/offset שצריך להבין כדי לדפדף על כל התוצאות."}
+      ]
+    },
+    {
+      id:"w3",
+      path:"/week-3/dynamic-content",
+      title:"שבוע 3: התמודדות עם תוכן דינמי (SSR vs. CSR)",
+      sub:"התמקדות בנושא 3 | היעד: שליטה בדפדפנים מבוססי Headless",
+      project:"סריקת אתר מבוסס React/Vue (CSR) שדורש טעינת JavaScript לפני שהמידע נגיש.",
+      tasks:[
+        {id:"w3t1", title:"הבנת ארכיטקטורת רינדור", practice:"הבדלים בין Server-Side Rendering ל-Client-Side Rendering (Single Page Apps).", tools:"תיאוריה וניתוח דפים", hours:"2 שעות",
+          detail:"באתרי SSR ה-HTML שמגיע מהשרת כבר מכיל את כל התוכן, ולכן requests רגיל מספיק. באתרי CSR (רוב אפליקציות ה-React/Vue) ה-HTML הראשוני כמעט ריק, וה-JavaScript בונה את הדף בצד הלקוח — ולכן צריך דפדפן אמיתי (או headless) כדי לראות את התוכן הסופי."},
+        {id:"w3t2", title:"עבודה עם Playwright / Puppeteer", practice:"הפעלת דפדפן, ניווט, המתנה לטעינת אלמנטים דינמיים, לחיצה על כפתורים.", tools:"Playwright Python/Node", hours:"8 שעות",
+          detail:"Playwright מפעיל דפדפן אמיתי (headless או גלוי) ומאפשר לשלוט בו בקוד: ניווט לכתובת, המתנה לאלמנט ספציפי (במקום sleep קבוע), לחיצות, מילוי טפסים וקריאת תוכן אחרי שה-JavaScript סיים לרוץ."},
+        {id:"w3t3", title:"חילוץ נתונים מ-DOM דינמי", practice:"טיפול בגלילה אינסופית (Infinite Scroll), טפסים וחלונות קופצים.", tools:"Playwright Async", hours:"4 שעות",
+          detail:"תבניות UI נפוצות דורשות טיפול מיוחד: גלילה אינסופית שטוענת עוד תוכן תוך כדי גלילה, חלונות קופצים (מודאלים/עוגיות) שחוסמים את הדף, וטפסים שצריך למלא לפני שהמידע נחשף."}
+      ]
+    },
+    {
+      id:"w4",
+      path:"/week-4/anti-bot-defenses",
+      title:"שבוע 4: טכניקות אנטי-בוט ועקיפת הגנות",
+      sub:"התמקדות בנושא 4 | היעד: כתיבת סורקים יציבים שאינם נחסמים",
+      project:"הרצת אותו סורק על פני מאות עמודים ברצף, בלי להיחסם, תוך שמירה על התנהגות מכבדת כלפי השרת.",
+      tasks:[
+        {id:"w4t1", title:"ניהול Rate Limiting ו-Delays", practice:"השהיות אקראיות, חיקוי התנהגות אנושית, הגדרת User-Agent Rotation.", tools:"Python time, random", hours:"3 שעות",
+          detail:"בקשות מהירות מדי ובקצב קבוע הן הסימן הכי בולט לבוט. השהיה אקראית בין בקשות, שינוי User-Agent מדי פעם, וכיבוד robots.txt הם הבסיס לסורק שמתנהג בהגינות ולא נחסם מיד."},
+        {id:"w4t2", title:"שימוש ב-Proxies", practice:"רוטציית IP, חיבור לפרוקסי שמור/מסחרי, התמודדות עם חסימות IP.", tools:"Proxy Services", hours:"5 שעות",
+          detail:"כשכתובת IP אחת נחסמת, פרוקסי מאפשר לשלוח בקשות דרך כתובות שונות. חשוב להבין את ההבדל בין פרוקסי datacenter (זול, קל לזיהוי) לפרוקסי residential (יקר יותר, נראה כמו משתמש אמיתי)."},
+        {id:"w4t3", title:"התמודדות עם Cloudflare & CAPTCHA", practice:"הכרת מנגנוני זיהוי (Fingerprinting) ושימוש בספריות ייעודיות (stealth).", tools:"Playwright Stealth", hours:"6 שעות",
+          detail:"שירותי הגנה כמו Cloudflare מזהים בוטים לפי טביעת אצבע של הדפדפן (fingerprinting) — לא רק כתובת IP. ספריות stealth מנסות להסוות סימנים אלה. שווה לזכור: לכל אתר יש תנאי שימוש, ולא כל מנגנון הגנה כדאי או ראוי לעקוף."}
+      ]
+    },
+    {
+      id:"w5",
+      path:"/week-5/scale-and-scrapy",
+      title:"שבוע 5: פרויקט סיום וסורקים בקנה מידה רחב",
+      sub:"סנכרון כולל והיכרות עם Scrapy Framework",
+      project:null,
+      tasks:[
+        {id:"w5t1", title:"הכרת Scrapy Framework", practice:"בניית Spiders, ניהול Pipelines, טיפול בבקשות מקביליות.", tools:"Python Scrapy", hours:"6 שעות",
+          detail:"Scrapy הוא פריימוורק שלם לסריקה בקנה מידה: Spider מגדיר מאיפה מתחילים ואיך לפרש תשובות, Pipeline מטפל בניקוי ושמירת הנתונים, וכל זה רץ באופן א-סינכרוני ומקבילי מהקופסה — בלי לכתוב את זה ידנית."},
+        {id:"w5t2", title:"פרויקט סיום מקיף", practice:"סריקת אתר מורכב (דינמי + הגנות) ואחסון הנתונים במסד נתונים.", tools:"כל הכלים שנלמדו", hours:"8 שעות",
+          detail:"פרויקט שמשלב את כל מה שנלמד: זיהוי אם צריך requests או דפדפן, טיפול בהגנות אם יש, וחיבור לבסיס נתונים אמיתי לשמירת התוצאות — במקום קובץ שטוח."}
+      ]
+    }
+  ];
+
+  const BADGE_META = {
+    w1:{icon:"🧱", label:"יסודות HTTP"},
+    w2:{icon:"🔍", label:"חוקרת רשת"},
+    w3:{icon:"🌀", label:"שולטת בדינמי"},
+    w4:{icon:"🛡️", label:"עוקפת חסימות"},
+    w5:{icon:"🏆", label:"בוגרת Scrapy"}
+  };
+
+  const ALL_TASK_IDS = WEEKS.flatMap(w => w.tasks.map(t => t.id));
+  const TOTAL_TASKS = ALL_TASK_IDS.length;
+
+  function todayStr(){
+    return new Date().toISOString().slice(0,10);
+  }
+
+  function loadStore(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return {tasks:{}, celebrated:false};
+      const parsed = JSON.parse(raw);
+      if(!parsed.tasks) parsed.tasks = {};
+      return parsed;
+    }catch(e){
+      return {tasks:{}, celebrated:false};
+    }
+  }
+
+  function saveStore(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    }catch(e){ /* ignore quota errors */ }
+  }
+
+  let store = loadStore();
+
+  function getTaskState(id){
+    if(!store.tasks[id]) store.tasks[id] = {done:false, date:"", notes:""};
+    return store.tasks[id];
+  }
+
+  // ---------- render ----------
+  const weeksContainer = document.getElementById("weeksContainer");
+
+  function buildTaskEl(task){
+    const st = getTaskState(task.id);
+    const art = document.createElement("article");
+    art.className = "task" + (st.done ? " is-done" : "");
+    art.dataset.taskId = task.id;
+
+    art.innerHTML = `
+      <div class="task-top">
+        <label class="check">
+          <input type="checkbox" data-role="done" ${st.done ? "checked" : ""}>
+          <span class="box"></span>
+        </label>
+        <div class="task-info">
+          <h3>${task.title}</h3>
+          <p class="task-practice">${task.practice}</p>
+          <div class="task-tags">
+            <span class="tag tool">${task.tools}</span>
+            <span class="tag hours">${task.hours}</span>
+          </div>
+        </div>
+        <div class="task-side">
+          <input type="date" class="date-input" data-role="date" value="${st.date || ""}" ${st.done ? "" : "disabled"}>
+          <button class="btn-detail" type="button" data-role="toggle-detail">לעומק ▾</button>
+        </div>
+      </div>
+      <div class="task-detail" data-role="detail" hidden>
+        <p>${task.detail}</p>
+      </div>
+      <div class="task-notes">
+        <label>הסיכום שלי</label>
+        <textarea data-role="notes" placeholder="מה למדת בפועל? מה היה קשה? קישורים או פקודות שכדאי לזכור...">${st.notes || ""}</textarea>
+      </div>
+    `;
+
+    const checkbox = art.querySelector('[data-role="done"]');
+    const dateInput = art.querySelector('[data-role="date"]');
+    const detailBox = art.querySelector('[data-role="detail"]');
+    const toggleBtn = art.querySelector('[data-role="toggle-detail"]');
+    const notesArea = art.querySelector('[data-role="notes"]');
+
+    checkbox.addEventListener("change", () => {
+      st.done = checkbox.checked;
+      art.classList.toggle("is-done", st.done);
+      if(st.done && !st.date){
+        st.date = todayStr();
+        dateInput.value = st.date;
+      }
+      dateInput.disabled = !st.done;
+      saveStore();
+      renderProgress();
+    });
+
+    dateInput.addEventListener("change", () => {
+      st.date = dateInput.value;
+      saveStore();
+      renderProgress();
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden = detailBox.hasAttribute("hidden");
+      if(isHidden){
+        detailBox.removeAttribute("hidden");
+        toggleBtn.textContent = "לעומק ▴";
+      }else{
+        detailBox.setAttribute("hidden","");
+        toggleBtn.textContent = "לעומק ▾";
+      }
+    });
+
+    let notesTimer;
+    notesArea.addEventListener("input", () => {
+      clearTimeout(notesTimer);
+      notesTimer = setTimeout(() => {
+        st.notes = notesArea.value;
+        saveStore();
+      }, 250);
+    });
+
+    return art;
+  }
+
+  function weekDoneCount(week){
+    return week.tasks.filter(t => getTaskState(t.id).done).length;
+  }
+
+  function buildWeekEl(week){
+    const section = document.createElement("section");
+    section.className = "week";
+    section.dataset.week = week.id;
+
+    section.innerHTML = `
+      <header class="week-head">
+        <div class="request-line"><span class="m">GET</span><span>${week.path}</span><span>HTTP/1.1</span></div>
+        <h2>${week.title}</h2>
+        <p class="week-sub">${week.sub}</p>
+        <div class="week-status">
+          <span class="status-pill idle" data-role="week-pill">100 Continue</span>
+          <div class="track"><div class="fill" data-role="week-fill"></div></div>
+          <span class="count" data-role="week-count">0/${week.tasks.length}</span>
+        </div>
+      </header>
+      <div class="tasks" data-role="tasks-list"></div>
+      ${week.project ? `<div class="note-box"><strong>פרויקט השבוע:</strong> ${week.project}</div>` : ""}
+    `;
+
+    const list = section.querySelector('[data-role="tasks-list"]');
+    week.tasks.forEach(t => list.appendChild(buildTaskEl(t)));
+
+    return section;
+  }
+
+  WEEKS.forEach(w => weeksContainer.appendChild(buildWeekEl(w)));
+
+  // ---------- progress / status / badges / streak ----------
+  function updateWeekUI(week){
+    const section = weeksContainer.querySelector(`[data-week="${week.id}"]`);
+    const done = weekDoneCount(week);
+    const total = week.tasks.length;
+    const pct = total ? Math.round((done/total)*100) : 0;
+
+    const pill = section.querySelector('[data-role="week-pill"]');
+    const fill = section.querySelector('[data-role="week-fill"]');
+    const count = section.querySelector('[data-role="week-count"]');
+
+    fill.style.width = pct + "%";
+    count.textContent = `${done}/${total}`;
+
+    pill.classList.remove("idle","pending","done");
+    if(done === 0){
+      pill.classList.add("idle");
+      pill.textContent = "100 Continue";
+    }else if(done === total){
+      pill.classList.add("done");
+      pill.textContent = "200 OK";
+    }else{
+      pill.classList.add("pending");
+      pill.textContent = "102 Processing";
+    }
+
+    return {done, total};
+  }
+
+  function motivationText(pct){
+    if(pct === 0) return "בואי נתחיל! הצעד הראשון הוא הכי חשוב 🚀";
+    if(pct < 25) return "יופי, את בתנועה!";
+    if(pct < 50) return "כבר רבע מהדרך — תמשיכי ככה";
+    if(pct < 75) return "מעבר לאמצע! את שולטת בזה";
+    if(pct < 100) return "כמעט שם, עוד קצת";
+    return "סיימת את כל התוכנית! 🎉";
+  }
+
+  function computeStreak(){
+    const dates = new Set(
+      Object.values(store.tasks)
+        .filter(t => t.done && t.date)
+        .map(t => t.date)
+    );
+    if(dates.size === 0) return 0;
+    let cursor = new Date();
+    const fmt = d => d.toISOString().slice(0,10);
+    if(!dates.has(fmt(cursor))){
+      cursor.setDate(cursor.getDate()-1);
+    }
+    let streak = 0;
+    while(dates.has(fmt(cursor))){
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    }
+    return streak;
+  }
+
+  function renderBadges(){
+    const row = document.getElementById("badgesRow");
+    row.innerHTML = "";
+    WEEKS.forEach(week => {
+      const {done, total} = updateWeekUI(week);
+      const meta = BADGE_META[week.id];
+      const span = document.createElement("span");
+      span.className = "badge" + (done === total ? " unlocked" : "");
+      span.textContent = `${meta.icon} ${meta.label}`;
+      row.appendChild(span);
+    });
+  }
+
+  function fireConfetti(){
+    const colors = ["#2f6fed","#12b76a","#f79009","#5ad0a4"];
+    for(let i=0;i<60;i++){
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      piece.style.left = Math.random()*100 + "vw";
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.animationDuration = (2.5 + Math.random()*1.5) + "s";
+      piece.style.animationDelay = (Math.random()*0.4) + "s";
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 4500);
+    }
+  }
+
+  function renderProgress(){
+    const doneTotal = ALL_TASK_IDS.filter(id => getTaskState(id).done).length;
+    const pct = Math.round((doneTotal/TOTAL_TASKS)*100);
+
+    document.getElementById("overallPct").textContent = pct + "%";
+    document.getElementById("overallFill").style.width = pct + "%";
+    document.getElementById("motivText").textContent = motivationText(pct);
+    document.getElementById("streakCount").textContent = computeStreak();
+
+    const overallPill = document.getElementById("overallStatusPill");
+    overallPill.classList.remove("idle","pending","done");
+    if(pct === 0){
+      overallPill.classList.add("idle");
+      overallPill.textContent = `100 Continue · ${pct}%`;
+    }else if(pct === 100){
+      overallPill.classList.add("done");
+      overallPill.textContent = `200 OK · ${pct}%`;
+    }else{
+      overallPill.classList.add("pending");
+      overallPill.textContent = `102 Processing · ${pct}%`;
+    }
+
+    renderBadges();
+
+    if(pct === 100 && !store.celebrated){
+      store.celebrated = true;
+      saveStore();
+      fireConfetti();
+    }
+    if(pct < 100 && store.celebrated){
+      store.celebrated = false;
+      saveStore();
+    }
+  }
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if(confirm("לאפס את כל ההתקדמות בתוכנית? הפעולה לא ניתנת לביטול.")){
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  });
+
+  renderProgress();
+})();
+</script>
+</body>
+</html>
